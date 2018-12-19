@@ -46,8 +46,8 @@ while True:
     #blurring, filtering and dilating all small changes using threshold
     blur = cv2.GaussianBlur(diff, (5,5), 0)
     thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)[1]
-    dilated = cv2.dilate(thresh, None, iterations=3)
-    dilated = cv2.GaussianBlur(dilated, (5,5), 0)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(9,9)) #kernel used in dilating process
+    dilated = cv2.dilate(thresh, kernel, iterations=3)
     cv2.imshow("Dilated", dilated)
 
     #finding and displaying contours in dilated image
