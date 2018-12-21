@@ -1,4 +1,4 @@
-#Import the necessary packages
+#motion detection using simple background subtraction method
 from imutils.video import VideoStream
 import argparse
 import datetime

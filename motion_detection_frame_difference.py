@@ -3,9 +3,10 @@
 import numpy as np
 import cv2 
 import imutils
-from imutils.video import VideoStream
+from matplotlib import pyplot as plt
 import argparse
 import time
+from image_statistics import image_stats
 
 
 #construct the argument parser and parse the arguments
@@ -30,6 +31,13 @@ frame2 = cv2.cvtColor(video.read()[1], cv2.COLOR_BGR2GRAY)
 cv2.namedWindow("webcam", cv2.WINDOW_NORMAL)
 cv2.namedWindow("Difference", cv2.WINDOW_NORMAL)
 cv2.namedWindow("Dilated", cv2.WINDOW_NORMAL)
+cv2.namedWindow("Adaptive Thresh", cv2.WINDOW_NORMAL)
+
+#create image_stats object to create PDF of pixel values
+st = image_stats([]) #initalize with empty array
+prob = 0.95 #probability used in thresholding process
+thresh_min = 30
+
 
 #main loop
 while True:
@@ -37,17 +45,25 @@ while True:
     frame = video.read()[1]
     grey = cv2.cvtColor(video.read()[1], cv2.COLOR_BGR2GRAY) #turn image grey
     cv2.imshow("webcam", frame)
-    #finding the difference between two consecitive frames and displaying
+    #finding the difference between two consecitive frames and displaying the resulting image and its histogram
     diff = cv2.absdiff(frame1, frame2)
+
 
     #displaying the absolute difference between two consecutive frames
     cv2.imshow("Difference", diff)
 
-    #blurring, filtering and dilating all small changes using threshold
+    #blurring, thresholding and dilating all small changes using threshold
     blur = cv2.GaussianBlur(diff, (5,5), 0)
-    thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)[1]
+    st.flatten_new_array(blur)
+    st.get_PDF()
+    thresh_val = st.get_rawScore(prob)
+    if thresh_val < thresh_min:
+        thresh_val = thresh_min
+    print(thresh_val) #printing the adaptive threshold value
+    thresh = cv2.threshold(blur, thresh_val, 255, cv2.THRESH_BINARY)[1] #implementing adaptive thresholding based on the probability distribution of the pixels
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(9,9)) #kernel used in dilating process
-    dilated = cv2.dilate(thresh, kernel, iterations=3)
+    dilated = cv2.dilate(thresh, kernel, iterations=7)
+    cv2.imshow("Adaptive Thresh", thresh)
     cv2.imshow("Dilated", dilated)
 
     #finding and displaying contours in dilated image
